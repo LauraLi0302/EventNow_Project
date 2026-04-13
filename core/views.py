@@ -17,14 +17,34 @@ def login_view(request):
     return render(request, 'login.html', {'form': form})
 
 
+# @login_required
+# def event_list(request):
+#     # 暂时不管角色，直接拿所有数据，看能不能跑通
+#     events = Event.objects.all()
+#     total_events = events.count()
+    
+#     return render(request, 'event_list.html', {
+#         'events': events,
+#         'total_events': total_events
+#     })
 @login_required
 def event_list(request):
-    # 暂时不管角色，直接拿所有数据，看能不能跑通
-    events = Event.objects.all()
+    user = request.user
+    
+    # 重新启用你的分权限逻辑
+    if user.is_superuser or (hasattr(user, 'role') and user.role == 'admin'):
+        events = Event.objects.all()
+    elif hasattr(user, 'role') and user.role == 'organiser':
+        # 核心：只看自己名下的活动
+        events = Event.objects.filter(organiser=user)
+    else:
+        events = Event.objects.all() 
+
     total_events = events.count()
     
     return render(request, 'event_list.html', {
         'events': events,
-        'total_events': total_events
+        'total_events': total_events,
+        'username': user.username  # 把名字也传过去
     })
 
