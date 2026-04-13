@@ -24,4 +24,5 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('', event_list, name='event_list'), # 设置首页直接显示活动列表
     path('login/', login_view, name='login'),
+    path('logout/', views.logout_view, name='logout'),
 ]

@@ -3,6 +3,7 @@ from django.contrib.auth import login
 from django.contrib.auth.forms import AuthenticationForm
 from django.contrib.auth.decorators import login_required
 from .models import Event
+from django.contrib.auth import logout
 
 # --- 这是你新加的：处理登录的逻辑 ---
 def login_view(request):
@@ -48,3 +49,6 @@ def event_list(request):
         'username': user.username  # 把名字也传过去
     })
 
+def logout_view(request):
+    logout(request)
+    return redirect('login')
