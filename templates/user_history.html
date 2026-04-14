@@ -1,0 +1,19 @@
+{% extends 'base.html' %}
+{% block content %}
+<h4>History for {{ target_user.username }}</h4>
+<div class="list-group">
+    {% for item in history_data %}
+        <div class="list-group-item">
+            {% if target_user.role == 'organiser' %}
+                <h6 class="mb-1">{{ item.title }} (Organised)</h6>
+                <small>Date: {{ item.date }}</small>
+            {% else %}
+                <h6 class="mb-1">{{ item.session.event.title }} - {{ item.session.title }}</h6>
+                <small>Registered at: {{ item.registered_at }} | Status: {{ item.status }}</small>
+            {% endif %}
+        </div>
+    {% empty %}
+        <p class="text-muted">No history found.</p>
+    {% endfor %}
+</div>
+{% endblock %}

@@ -26,5 +26,7 @@ urlpatterns = [
     path('login/', login_view, name='login'),
     path('logout/', views.logout_view, name='logout'),
     path('profile/', views.profile_settings, name='profile_settings'),
-
+    path('users/', views.user_management, name='user_management'),
+    path('users/archive/<int:user_id>/', views.archive_user, name='archive_user'),
+    path('users/history/<int:user_id>/', views.user_history, name='user_history'),
 ]

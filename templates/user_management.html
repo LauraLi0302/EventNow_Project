@@ -1,21 +1,42 @@
 {% extends 'base.html' %}
-{% block title %}User Management{% endblock %}
-
 {% block content %}
-<div class="card shadow-sm">
-    <div class="card-header bg-white d-flex justify-content-between align-items-center py-3">
-        <h5 class="mb-0 text-primary">User Management</h5>
-        <div class="btn-group">
-            <a href="?role=all" class="btn btn-sm btn-outline-secondary {% if role_filter == 'all' %}active{% endif %}">All</a>
-            <a href="?role=organiser" class="btn btn-sm btn-outline-secondary {% if role_filter == 'organiser' %}active{% endif %}">Organisers</a>
-            <a href="?role=attendee" class="btn btn-sm btn-outline-secondary {% if role_filter == 'attendee' %}active{% endif %}">Attendees</a>
+<div class="card shadow-sm border-0">
+    <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">
+            {% if show_archived %}
+                <span class="text-danger"><i class="bi bi-trash me-2"></i>Archived Users (Recycle Bin)</span>
+            {% else %}
+                <span class="text-primary"><i class="bi bi-people me-2"></i>User Management</span>
+            {% endif %}
+        </h5>
+        
+        <div class="d-flex align-items-center">
+            <div class="me-3">
+                {% if show_archived %}
+                    <a href="?archived=0" class="btn btn-sm btn-outline-success">
+                        <i class="bi bi-person-check me-1"></i>Back to Active
+                    </a>
+                {% else %}
+                    <a href="?archived=1" class="btn btn-sm btn-outline-danger">
+                        <i class="bi bi-archive me-1"></i>View Archived
+                    </a>
+                {% endif %}
+            </div>
+
+            <div class="btn-group">
+                <a href="?role=all&archived={{ show_archived|yesno:'1,0' }}" class="btn btn-sm btn-outline-primary {% if role_filter == 'all' %}active{% endif %}">All</a>
+                <a href="?role=organiser&archived={{ show_archived|yesno:'1,0' }}" class="btn btn-sm btn-outline-primary {% if role_filter == 'organiser' %}active{% endif %}">Organisers</a>
+                <a href="?role=attendee&archived={{ show_archived|yesno:'1,0' }}" class="btn btn-sm btn-outline-primary {% if role_filter == 'attendee' %}active{% endif %}">Attendees</a>
+            </div>
         </div>
     </div>
-    <div class="card-body">
-        <table class="table table-hover">
+
+    <div class="table-responsive">
+        <table class="table align-middle mb-0">
             <thead class="table-light">
                 <tr>
                     <th>Username</th>
+                    <th>Email</th>
                     <th>Role</th>
                     <th>Joined Date</th>
                     <th>Actions</th>
@@ -25,16 +46,30 @@
                 {% for u in users %}
                 <tr>
                     <td>{{ u.username }}</td>
+                    <td>{{ u.email }}</td>
                     <td>
                         <span class="badge {% if u.role == 'organiser' %}bg-success{% else %}bg-info text-dark{% endif %}">
-                            {{ u.role|title }}
+                            {{ u.get_role_display }}
                         </span>
                     </td>
-                    <td>{{ u.date_joined|date:"Y-m-d H:i" }}</td>
+                    <td>{{ u.date_joined|date:"Y-m-d" }}</td>
                     <td>
-                        <a href="{% url 'user_history' u.id %}" class="btn btn-sm btn-primary">View History</a>
-                        <button class="btn btn-sm btn-warning">Archive</button>
+                        <a href="{% url 'user_history' u.id %}" class="btn btn-sm btn-info text-white">History</a>
+                        
+                        {% if u.is_archived %}
+                            <a href="{% url 'archive_user' u.id %}" class="btn btn-sm btn-success">
+                                <i class="bi bi-arrow-counterclockwise me-1"></i>Restore
+                            </a>
+                        {% else %}
+                            <a href="{% url 'archive_user' u.id %}" class="btn btn-sm btn-warning" onclick="return confirm('Archive this user?')">
+                                <i class="bi bi-archive me-1"></i>Archive
+                            </a>
+                        {% endif %}
                     </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="5" class="text-center py-4 text-muted">No users found.</td>
                 </tr>
                 {% endfor %}
             </tbody>
