@@ -6,8 +6,14 @@ from .models import Event
 from django.contrib.auth import logout
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
-from .models import User, Event, Registration
+from .models import User, Event, Registration, Session
 from django.core.paginator import Paginator
+from .forms import EventForm, SessionForm
+from datetime import datetime
+from django.db.models import Count, Q
+from django.http import JsonResponse
+import time
+
 
 
 # 登录
@@ -175,3 +181,82 @@ def event_detail(request, event_id):
     sessions = event.sessions.filter(is_archived=False)
     return render(request, 'event_detail.html', {'event': event, 'sessions': sessions
     })
+
+@login_required
+def create_event(request):
+    if request.user.role not in ['admin', 'organiser']:
+        return redirect('event_display')
+    
+    if request.method == 'POST':
+        form = EventForm(request.POST)
+        if form.is_valid():
+            event = form.save(commit=False)
+            event.organiser = request.user  # 绑定当前用户
+            event.save()
+            # 创建成功后，跳转到添加时间的页面，带上 event_id
+            return redirect('add_sessions', event_id=event.id)
+    else:
+        form = EventForm()
+    return render(request, 'create_event.html', {'form': form})
+
+@login_required
+def add_sessions(request, event_id):
+    # 1. 获取当前正在为其添加场次的活动对象
+    event = get_object_or_404(Event, id=event_id)
+    
+    if request.method == 'POST':
+        form = SessionForm(request.POST)
+        if form.is_valid():
+            session = form.save(commit=False)
+            session.event = event
+            
+            # 2. 核心修改：获取该活动在第一步设置的日期 (YYYY-MM-DD)
+            event_date = event.date  
+            
+            # 3. 获取表单传来的时间字符串 (HH:MM)
+            start_t = request.POST.get('start_time')
+            end_t = request.POST.get('end_time')
+            
+            # 4. 将“活动日期”和“选择的时间”合成为完整的 datetime 对象存入数据库
+            try:
+                session.start_time = datetime.combine(event_date, datetime.strptime(start_t, '%H:%M').time())
+                session.end_time = datetime.combine(event_date, datetime.strptime(end_t, '%H:%M').time())
+                session.save()
+            except ValueError:
+                # 防止时间格式抓取失败的容错处理
+                return render(request, 'add_sessions.html', {'form': form, 'event': event, 'error': 'Invalid time format'})
+            
+            if 'another' in request.POST:
+                return redirect('add_sessions', event_id=event.id)
+            return redirect('event_management')
+    else:
+        form = SessionForm()
+    
+    return render(request, 'add_sessions.html', {'form': form, 'event': event})
+
+def event_detail(request, event_id):
+    event = get_object_or_404(Event, id=event_id)
+    
+    # 获取该活动的所有场次，并预计算每个场次已有的 'active' 状态报名人数
+    # 使用 annotate 可以直接在数据库层面计算，效率更高
+    sessions = event.sessions.annotate(
+        current_registrations=Count(
+            'registrations', 
+            filter=Q(registrations__status='active')
+        )
+    ).order_by('start_time')
+    
+    # 为每个 session 对象动态添加剩余名额属性
+    for session in sessions:
+        session.remaining_slots = session.capacity - session.current_registrations
+
+    context = {
+        'event': event,
+        'sessions': sessions,
+    }
+    return render(request, 'event_detail.html', context)
+
+@login_required
+def ai_assistant(request):
+    return render(request, 'ai_assistant.html')
+

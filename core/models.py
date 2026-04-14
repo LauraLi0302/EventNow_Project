@@ -50,6 +50,11 @@ class Session(models.Model):
 
     def __str__(self):
         return f"{self.event.title} - {self.title}"
+    @property
+    def remaining_capacity(self):
+        # 计算当前场次已有的报名人数 (status='active' 的报名)
+        current_registrations = self.registrations.filter(status='active').count()
+        return self.capacity - current_registrations
 
 # 5. 报名表 (3.3 实时计算)
 class Registration(models.Model):

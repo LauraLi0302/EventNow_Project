@@ -1,0 +1,73 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container mt-4">
+    <div class="row mb-4">
+        <div class="col-md-4">
+            {% if event.image_url %}
+                <img src="{{ event.image_url }}" class="img-fluid rounded shadow-sm" alt="{{ event.image_alt_text }}">
+            {% else %}
+                <div class="bg-light d-flex align-items-center justify-content-center rounded" style="height: 200px;">
+                    <i class="bi bi-image text-muted" style="font-size: 3rem;"></i>
+                </div>
+            {% endif %}
+        </div>
+        <div class="col-md-8">
+            <h2 class="fw-bold">{{ event.title }}</h2>
+            <p class="text-muted"><i class="bi bi-geo-alt me-2"></i>{{ event.location }} | <i class="bi bi-calendar-event me-2"></i>{{ event.date }}</p>
+            <hr>
+            <p>{{ event.description }}</p>
+        </div>
+    </div>
+
+    <div class="card border-0 shadow-sm">
+        <div class="card-header bg-white py-3">
+            <h5 class="mb-0">Available Sessions</h5>
+        </div>
+        <div class="table-responsive">
+            <table class="table align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>Session Title</th>
+                        <th>Time</th>
+                        <th>Capacity/Remaining</th>
+                        <th class="text-center">Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for session in sessions %}
+                    <tr>
+                        <td><strong>{{ session.title }}</strong></td>
+                        <td>{{ session.start_time|date:"H:i" }} - {{ session.end_time|date:"H:i" }}</td>
+                        <td>
+                            {% if user.role == 'admin' or user.role == 'organiser' %}
+                                <span class="badge bg-info text-dark">Registered: {{ session.current_registrations }} / {{ session.capacity }}</span>
+                            {% else %}
+                                <span class="badge {% if session.remaining_slots > 0 %}bg-success{% else %}bg-danger{% endif %}">
+                                    {{ session.remaining_slots }} slots left (Total: {{ session.capacity }})
+                                </span>
+                            {% endif %}
+                        </td>
+                        <td class="text-center">
+                            {% if user.role == 'attendee' %}
+                                {% if session.remaining_slots > 0 %}
+                                    <form action="#" method="POST" class="d-inline">
+                                        {% csrf_token %}
+                                        <button type="submit" class="btn btn-primary btn-sm px-4">Register</button>
+                                    </form>
+                                {% else %}
+                                    <button class="btn btn-secondary btn-sm px-4" disabled>Full</button>
+                                {% endif %}
+                            {% else %}
+                                <a href="#" class="btn btn-outline-secondary btn-sm">Manage List</a>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="4" class="text-center py-4 text-muted">No sessions added for this event.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

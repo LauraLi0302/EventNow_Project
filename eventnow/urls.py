@@ -32,5 +32,7 @@ urlpatterns = [
     path('management/events/', views.event_management, name='event_management'),
     path('events/', views.event_display, name='event_display'),
     path('events/<int:event_id>/', views.event_detail, name='event_detail'),
-
+    path('management/events/create/', views.create_event, name='create_event'),
+    path('management/events/<int:event_id>/sessions/add/', views.add_sessions, name='add_sessions'),
+    path('ai-assistant/', views.ai_assistant, name='ai_assistant'),
 ]

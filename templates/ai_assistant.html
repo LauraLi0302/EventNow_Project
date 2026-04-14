@@ -1,0 +1,99 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-md-10">
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-white py-3">
+                    <h5 class="mb-0"><i class="bi bi-stars text-primary me-2"></i>EventSpark - AI Creative Assistant</h5>
+                </div>
+                <div class="card-body bg-light" id="chat-window" style="height: 400px; overflow-y: auto;">
+                    <div class="d-flex mb-3">
+                        <div class="bg-white p-3 rounded shadow-sm border" style="max-width: 80%;">
+                            Hello! I am your AI assistant. Tell me a few keywords about your event, and I'll help you brain-storm themes and meanings.
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer bg-white border-top-0">
+                    <div class="input-group">
+                        <input type="text" id="user-input" class="form-control" placeholder="Enter keywords (e.g., Python, students, career)...">
+                        <button class="btn btn-primary" id="send-btn">Generate Ideas</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+// 获取 Django 传入的用户角色
+const userRole = "{{ user.role }}"; 
+
+document.getElementById('send-btn').onclick = function() {
+    const input = document.getElementById('user-input');
+    const chatWindow = document.getElementById('chat-window');
+    const keywords = input.value.trim();
+    
+    if (!keywords) return;
+
+    // 1. 展示用户消息
+    chatWindow.innerHTML += `
+        <div class="d-flex justify-content-end mb-3">
+            <div class="bg-primary text-white p-3 rounded-pill px-4 shadow-sm" style="max-width: 80%;">
+                ${keywords}
+            </div>
+        </div>`;
+
+    input.value = '';
+    chatWindow.scrollTop = chatWindow.scrollHeight;
+
+    // 2. 模拟 AI 响应逻辑
+    setTimeout(() => {
+        let aiResponse = "";
+
+        if (userRole === 'attendee') {
+            // 针对参与者的响应：活动推荐
+            aiResponse = `
+                <p class="mb-2">Greetings! Based on your interest in "<strong>${keywords}</strong>", I found some great matches for you:</p>
+                <div class="card border-0 bg-light mb-2">
+                    <div class="card-body p-2">
+                        <small class="text-primary fw-bold">Recommended Event:</small><br>
+                        <strong>Welcome Week 2026</strong><br>
+                        <span class="small text-muted">Perfect for exploring ${keywords} with peers.</span>
+                    </div>
+                </div>
+                <p class="small mb-2">Would you like to see more details?</p>
+                <a href="/events/" class="btn btn-sm btn-primary rounded-pill px-3">Explore Events</a>
+            `;
+        } else {
+            // 针对管理员/组织者的响应：策划建议 (基于 image_36dc50.png 的流程)
+            aiResponse = `
+                <div class="mb-2">
+                    <span class="badge bg-soft-primary text-primary mb-2">Genie's Suggestion</span><br>
+                    <strong>Theme:</strong> ${keywords} Synergy 2026<br>
+                    <strong>Meaning:</strong> This event aims to bridge the gap between academic theory and industry practice, fostering a community of ${keywords} enthusiasts.
+                </div>
+                <button class="btn btn-sm btn-outline-primary rounded-pill mt-2" onclick="useTheme('${keywords} Synergy 2026')">
+                    <i class="bi bi-check2-circle"></i> Use this Theme
+                </button>
+            `;
+        }
+
+        chatWindow.innerHTML += `
+            <div class="d-flex mb-3">
+                <div class="bg-white p-3 rounded-3 shadow-sm border" style="max-width: 85%;">
+                    ${aiResponse}
+                </div>
+            </div>`;
+        
+        chatWindow.scrollTop = chatWindow.scrollHeight;
+    }, 1000);
+};
+
+// 辅助函数：将主题填入剪贴板或跳转创建页
+function useTheme(themeText) {
+    navigator.clipboard.writeText(themeText).then(() => {
+        alert("Theme copied to clipboard! You can now paste it in the Event Creation form.");
+    });
+}
+</script>
+{% endblock %}
