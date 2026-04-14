@@ -13,6 +13,9 @@ from datetime import datetime
 from django.db.models import Count, Q
 from django.http import JsonResponse
 import time
+from django.db import IntegrityError
+from django.contrib.auth import get_user_model
+from django.contrib import messages
 
 
 
@@ -27,6 +30,31 @@ def login_view(request):
     else:
         form = AuthenticationForm()
     return render(request, 'login.html', {'form': form})
+
+# 获取当前项目实际使用的 User 模型
+User = get_user_model()
+
+def register_view(request):
+    if request.method == 'POST':
+        u_name = request.POST.get('username')
+        u_email = request.POST.get('email')
+        u_pwd = request.POST.get('password')
+        u_role = request.POST.get('role')
+
+        try:
+            # 这里的 User 现在指向的是你自定义的 core.User
+            user = User.objects.create_user(username=u_name, email=u_email, password=u_pwd)
+            user.role = u_role 
+            user.save()
+
+            messages.success(request, f"Welcome {u_name}! Registered as {u_role}.")
+            return redirect('login')
+
+        except IntegrityError:
+            messages.error(request, "Username already exists.")
+            return render(request, 'register.html')
+
+    return render(request, 'register.html')
 
 
 @login_required

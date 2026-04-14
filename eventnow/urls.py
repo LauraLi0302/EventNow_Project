@@ -35,4 +35,6 @@ urlpatterns = [
     path('management/events/create/', views.create_event, name='create_event'),
     path('management/events/<int:event_id>/sessions/add/', views.add_sessions, name='add_sessions'),
     path('ai-assistant/', views.ai_assistant, name='ai_assistant'),
+    path('login/', views.login_view, name='login'),
+    path('register/', views.register_view, name='register'),
 ]
