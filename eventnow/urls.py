@@ -25,4 +25,6 @@ urlpatterns = [
     path('', event_list, name='event_list'), # 设置首页直接显示活动列表
     path('login/', login_view, name='login'),
     path('logout/', views.logout_view, name='logout'),
+    path('profile/', views.profile_settings, name='profile_settings'),
+
 ]
