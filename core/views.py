@@ -7,6 +7,8 @@ from django.contrib.auth import logout
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from .models import User, Event, Registration
+from django.core.paginator import Paginator
+
 
 # 登录
 def login_view(request):
@@ -120,4 +122,56 @@ def user_history(request, user_id):
     return render(request, 'user_history.html', {
         'target_user': target_user,
         'history_data': history_data
+    })
+
+# --- 项目管理 (管理员 & 组织者) ---
+@login_required
+def event_management(request):
+    user = request.user
+    
+    # 权限隔离逻辑
+    if user.role == 'admin':
+        # 管理员看全部
+        event_list = Event.objects.all().order_by('-created_at')
+    elif user.role == 'organiser':
+        # 组织者只看自己创建的
+        event_list = Event.objects.filter(organiser=user).order_by('-created_at')
+    else:
+        # 参与者无权访问管理端
+        return redirect('event_display')
+
+    # 分页：每页展示 10 个项目
+    paginator = Paginator(event_list, 10)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
+    return render(request, 'event_management.html', {'page_obj': page_obj})
+
+# --- 活动展示 (所有登录用户) ---
+@login_required
+def event_display(request):
+    # 基础筛选：只展示未归档的活动
+    event_list = Event.objects.filter(is_archived=False).order_by('date')
+
+    # 时间筛选逻辑
+    selected_date = request.GET.get('date')
+    if selected_date:
+        event_list = event_list.filter(date=selected_date)
+
+    # 分页：每页展示 6 个（网格展示通常数量少点好看）
+    paginator = Paginator(event_list, 6)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
+    return render(request, 'event_display.html', {
+        'page_obj': page_obj,
+        'selected_date': selected_date
+    })
+
+@login_required
+def event_detail(request, event_id):
+    event = get_object_or_404(Event, id=event_id)
+    # 获取该活动下的所有场次 (Session)
+    sessions = event.sessions.filter(is_archived=False)
+    return render(request, 'event_detail.html', {'event': event, 'sessions': sessions
     })

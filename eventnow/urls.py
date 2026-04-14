@@ -29,4 +29,8 @@ urlpatterns = [
     path('users/', views.user_management, name='user_management'),
     path('users/archive/<int:user_id>/', views.archive_user, name='archive_user'),
     path('users/history/<int:user_id>/', views.user_history, name='user_history'),
+    path('management/events/', views.event_management, name='event_management'),
+    path('events/', views.event_display, name='event_display'),
+    path('events/<int:event_id>/', views.event_detail, name='event_detail'),
+
 ]
